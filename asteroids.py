@@ -109,6 +109,8 @@ class Asteroid:
 		self.xvel = xvel
 		self.yvel = yvel
 		self.size = size
+		self.rot = np.random.rand()*360
+		print(self.rot)
 		self.game = game
 
 		asteroid_img = make_img('asteroid.png')
@@ -433,7 +435,7 @@ def on_draw():
 
 	if game.state == 'MENU':
 		for a in game.asteroids:
-			a.asteroid.update(a.xpos, a.ypos, scale=a.size)
+			a.asteroid.update(a.xpos, a.ypos, scale=a.size, rotation=a.rot)
 
 		game.batch.draw()
 
