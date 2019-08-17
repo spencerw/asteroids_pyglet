@@ -110,7 +110,7 @@ class Asteroid:
 		self.yvel = yvel
 		self.size = size
 		self.rot = np.random.rand()*360
-		print(self.rot)
+		self.exploding = False
 		self.game = game
 
 		asteroid_img = make_img('asteroid.png')
@@ -170,8 +170,8 @@ class Game:
 		self.flame = pyglet.sprite.Sprite(flame_img, x=self.p_xpos, y=self.p_ypos, group=self.background)
 
 		explosion = pyglet.image.load('explosion.png')
-		explosion_seq = pyglet.image.ImageGrid(explosion, 5, 5)
-		self.exp_anim = pyglet.image.Animation.from_image_sequence(explosion_seq, 0.05, False)
+		explosion_seq = pyglet.image.ImageGrid(explosion, 1, 6)
+		self.exp_anim = pyglet.image.Animation.from_image_sequence(explosion_seq, 0.1, False)
 
 		s_fac = 0.5
 		self.s_lives = []
@@ -268,6 +268,8 @@ class Game:
 	def check_bullet_ast_coll(self):
 		for idx1 in range(len(self.bullets)):
 			for idx2 in range(len(self.asteroids)):
+				if self.asteroids[idx2].exploding:
+					continue
 				x1 = self.bullets[idx1].xpos
 				x2 = self.asteroids[idx2].xpos
 				y1 = self.bullets[idx1].ypos
@@ -312,7 +314,11 @@ class Game:
 	def break_asteroid(self, idx):
 		a = self.asteroids[idx]
 		a.asteroid.image = self.exp_anim
-		a.asteroid.on_animation_end = lambda: self.asteroids.remove(a)
+		a.asteroid.exploding = True
+		def asteroid_done():
+			a.asteroid.delete()
+			self.asteroids.remove(a)
+		a.asteroid.on_animation_end = asteroid_done
 
 		if a.size == ast_sizes[-1]:
 			return
@@ -441,7 +447,7 @@ def on_draw():
 
 	if game.state == 'PLAYING':
 		for a in game.asteroids:
-			a.asteroid.update(a.xpos, a.ypos, scale=a.size)
+			a.asteroid.update(a.xpos, a.ypos, scale=a.size, rotation=a.rot)
 
 		game.player.update(x=game.p_xpos, y=game.p_ypos, rotation=game.p_rot)
 
