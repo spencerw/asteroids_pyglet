@@ -48,7 +48,7 @@ ast_break_max_vel = 50     # Max amount to add to asteroid vel components after 
 num_ast = 10               # Initial number of asteroids to generate
 lives = 2                  # Number of etra lives that player stars with
 
-window = pyglet.window.Window()
+window = pyglet.window.Window(800, 600)
 
 def make_img(filename, anchor_x=None, anchor_y=None):
 	img = pyglet.image.load(filename)
