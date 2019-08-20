@@ -117,7 +117,6 @@ class Asteroid:
 		self.asteroid = pyglet.sprite.Sprite(asteroid_img, x=self.xpos, y=self.ypos,
 			                                 batch=game.batch, group=game.background)
 
-	# Return True if the asteroid went off the screen and needs to be deleted
 	def update(self, dt):
 		self.xpos += self.xvel*dt
 		self.ypos += self.yvel*dt
@@ -125,8 +124,6 @@ class Asteroid:
 		self.xpos, self.ypos = wrap(self.xpos, self.ypos, self.game.xmin,
 			                        self.game.xmax, self.game.ymin, 
 			                        self.game.ymax)
-
-		return False
 
 class Game:
 	def __init__(self, window):
@@ -138,6 +135,10 @@ class Game:
 		self.state = 'MENU'
 		self.player_img = make_img('player.png')
 		self.init_menu_state()
+
+	def gen_exp_anim(self):
+		exp_anim = pyglet.image.Animation.from_image_sequence(self.explosion_seq, 0.1, False)
+		return exp_anim
 
 	def init_menu_state(self):
 		self.batch = pyglet.graphics.Batch()
@@ -166,12 +167,11 @@ class Game:
 		self.reset()
 
 		self.shoot_start = self.player.width // 2
-		flame_img = make_img('flame.png', anchor_x=38)
+		flame_img = make_img('flame.png', anchor_x=55)
 		self.flame = pyglet.sprite.Sprite(flame_img, x=self.p_xpos, y=self.p_ypos, group=self.background)
 
 		explosion = pyglet.image.load('explosion.png')
-		explosion_seq = pyglet.image.ImageGrid(explosion, 1, 6)
-		self.exp_anim = pyglet.image.Animation.from_image_sequence(explosion_seq, 0.1, False)
+		self.explosion_seq = pyglet.image.ImageGrid(explosion, 1, 7)
 
 		s_fac = 0.5
 		self.s_lives = []
@@ -287,6 +287,8 @@ class Game:
 	# and return the index of the asteroid if one occurs
 	def check_player_ast_coll(self):
 		for idx in range(len(self.asteroids)):
+			if self.asteroids[idx].exploding:
+					continue
 			x1 = self.p_xpos
 			x2 = self.asteroids[idx].xpos
 			y1 = self.p_ypos
@@ -313,12 +315,11 @@ class Game:
 	# Break an asteroid into smaller pieces
 	def break_asteroid(self, idx):
 		a = self.asteroids[idx]
-		a.asteroid.image = self.exp_anim
-		a.asteroid.exploding = True
+		self.asteroids[idx].asteroid.image = self.gen_exp_anim()
+		self.asteroids[idx].exploding = True
 		def asteroid_done():
-			a.asteroid.delete()
 			self.asteroids.remove(a)
-		a.asteroid.on_animation_end = asteroid_done
+		self.asteroids[idx].asteroid.on_animation_end = asteroid_done
 
 		if a.size == ast_sizes[-1]:
 			return
@@ -368,7 +369,7 @@ class Game:
 			if i1 >= 0:
 				self.exploded = True
 				self.release_all_keys()
-				self.player.image = self.exp_anim
+				self.player.image = self.gen_exp_anim()
 				self.player.on_animation_end = self.done_exploding_player
 
 		i1, i2 = self.check_bullet_ast_coll()
